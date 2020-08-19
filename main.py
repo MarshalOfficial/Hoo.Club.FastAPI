@@ -71,6 +71,11 @@ class Token(BaseModel):
     MemberID: int
 
 
+class BackendEntity(BaseModel):
+    procname: str
+    params: str
+
+
 class TokenData(BaseModel):
     username: Optional[str] = None
 
@@ -209,5 +214,5 @@ async def login_for_access_token(tokenEntity: TokenEntity):
 
 
 @app.post("/BackendEngine/")
-async def read_own_test(procname, param, current_user: User = Depends(get_current_active_user)):
-    return callProcedure(procname, param)
+async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
+    return callProcedure(backendEntity.procname, backendEntity.params)
