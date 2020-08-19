@@ -1,0 +1,184 @@
+from datetime import datetime, timedelta
+import datetime
+from typing import Optional
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel
+
+import json
+import pyodbc
+from sqlalchemy import create_engine
+import urllib
+import os
+
+
+def myconverter(o):
+    if isinstance(o, datetime.datetime):
+        return o.__str__()
+
+
+def callProcedure(procname, data):
+    dir = '%s/secret.json' % (os.path.dirname(__file__))
+    with open(dir) as json_file:
+        secret = json.load(json_file)
+
+    params = urllib.parse.quote_plus(
+        'DRIVER={SQL Server Native Client 11.0};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (secret['server'], secret['db'], secret['username'], secret['password']))
+    db = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
+
+    connection = db.raw_connection()
+
+    try:
+        cursor = connection.cursor()
+        sql = """{ CALL [dbo].[ProcEngine] (@proc=?,@data=?) }"""
+        params = (procname, data)
+
+        cursor = cursor.execute(sql, params)
+        dt = cursor.fetchall()
+        # print(dt)
+        columns = [column[0] for column in cursor.description]
+        # print(columns)
+        results = []
+        for row in dt:
+            results.append(dict(zip(columns, row)))
+        cursor.close()
+        connection.commit()
+        # print(results)
+        jret = json.dumps(results, default=myconverter,
+                          ensure_ascii=False).encode('utf8')
+        print(jret)
+        return jret
+    except Exception as e:
+        errstr = "DB Call Proc Error!", e, "occurred."
+        print(errstr)
+        return None
+    finally:
+        connection.close()
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+class User(BaseModel):
+    username: str
+    id: int
+    result: str
+    isactive: bool
+    isdeleted: bool
+    createdate: str
+    updatedate: str
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+app = FastAPI()
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+# testpw = pwd_context.encrypt(password) will be used for create a new user
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+def get_user(username: str):
+    result = callProcedure('UserGet', '{"username":"%s"}' % username)
+    return json.loads(result)[0]
+
+
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
+    user_password = user.get("Password", None)
+    if not verify_password(password, user_password):
+        return False
+    return user
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    dir = '%s/secret.json' % (os.path.dirname(__file__))
+    with open(dir) as json_file:
+        secret = json.load(json_file)
+
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+
+    # use openssl rand -hex32 to generate a 32 character token for urself and put it in secret json file to use it here
+    encoded_jwt = jwt.encode(
+        to_encode, secret['secretkey'], algorithm=secret['ALGORITHM'])
+    return encoded_jwt
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    dir = '%s/secret.json' % (os.path.dirname(__file__))
+    with open(dir) as json_file:
+        secret = json.load(json_file)
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, secret['secretkey'], algorithms=[
+                             secret['ALGORITHM']])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
+    #user_id = current_user.get("ID", None)
+    if not current_user:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+@app.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    dir = '%s/secret.json' % (os.path.dirname(__file__))
+    with open(dir) as json_file:
+        secret = json.load(json_file)
+
+    user = authenticate_user(form_data.username, form_data.password)
+    #user_id = user.get("ID", None)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(
+        minutes=int(secret['ACCESS_TOKEN_EXPIRE_MINUTES']))
+    access_token = create_access_token(
+        data={"sub": user.get("UserName", None)}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.post("/BackendEngine/")
+async def read_own_test(procname, param, current_user: User = Depends(get_current_active_user)):
+    return callProcedure(procname, param)
