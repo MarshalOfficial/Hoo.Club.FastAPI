@@ -172,12 +172,12 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(username, password):
     dir = '%s/secret.json' % (os.path.dirname(__file__))
     with open(dir) as json_file:
         secret = json.load(json_file)
 
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user(username, password)
     #user_id = user.get("ID", None)
     if not user:
         raise HTTPException(
