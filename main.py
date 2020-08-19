@@ -79,6 +79,11 @@ class User(BaseModel):
     updatedate: str
 
 
+class TokenEntity(BaseModel):
+    username: str
+    password: str
+
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -172,12 +177,12 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(username, password):
+async def login_for_access_token(tokenEntity: TokenEntity):
     dir = '%s/secret.json' % (os.path.dirname(__file__))
     with open(dir) as json_file:
         secret = json.load(json_file)
 
-    user = authenticate_user(username, password)
+    user = authenticate_user(tokenEntity.username, tokenEntity.password)
     #user_id = user.get("ID", None)
     if not user:
         raise HTTPException(
