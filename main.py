@@ -63,6 +63,12 @@ def callProcedure(procname, data):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    UserID: int
+    UserName: str
+    IsActive: bool
+    FirstName: str
+    LastName: str
+    MemberID: int
 
 
 class TokenData(BaseModel):
@@ -190,12 +196,16 @@ async def login_for_access_token(tokenEntity: TokenEntity):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    print(user)
     access_token_expires = timedelta(
         minutes=int(secret['ACCESS_TOKEN_EXPIRE_MINUTES']))
     access_token = create_access_token(
         data={"sub": user.get("UserName", None)}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
+            "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
+            "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
+            "MemberID": user.get("MemberID", None)}
 
 
 @app.post("/BackendEngine/")
