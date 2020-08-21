@@ -33,6 +33,7 @@ def callProcedure(procname, data):
     connection = db.raw_connection()
 
     try:
+        print("start calling " + procname)
         cursor = connection.cursor()
         sql = """{ CALL [dbo].[ProcEngine] (@proc=?,@data=?) }"""
         params = (procname, data)
@@ -102,8 +103,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000",
-    "http://192.168.43.203:3000",
+    "http://localhost:44381",
+    "http://app.hoo.club:44381",
+    "https://app.hoo.club:44381",
+    "http://app.hoo.club",
+    "https://app.hoo.club",
 ]
 
 app.add_middleware(
@@ -243,3 +247,11 @@ async def read_own_test(backendEntity: BackendEntity, current_user: User = Depen
 @app.post("/BackendEngine1/")
 async def read_own_test(procname: str, params: str):
     return callProcedure(procname, params)
+
+
+# @app.get("/BackendEngineGet/")
+# async def read_own_test():
+#     # print(backendEntity.procname)
+#     # print(backendEntity.params)
+#     # print(str(User))
+#     return callProcedure("GetSurveyImages", '{"PageNumber":"1","PageSize":"3","CategoryID":"1","UserID":"5"}')
