@@ -149,9 +149,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
 
+    # print(to_encode)
+
     # use openssl rand -hex32 to generate a 32 character token for urself and put it in secret json file to use it here
     encoded_jwt = jwt.encode(
         to_encode, secret['secretkey'], algorithm=secret['ALGORITHM'])
+    # print('original jwt :' + encoded_jwt)
     return encoded_jwt
 
 
@@ -166,13 +169,28 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, secret['secretkey'], algorithms=[
-                             secret['ALGORITHM']])
+        # print('get_current_user: start')
+        # print('token:' + token)
+        # print('sec key:' + secret['secretkey'])
+        # print('alg:' + secret['ALGORITHM'])
+        jwt_options = {
+            'verify_signature': False,
+            'verify_exp': True,
+            'verify_nbf': False,
+            'verify_iat': True,
+            'verify_aud': False
+        }
+        payload = jwt.decode(token, secret["secretkey"], algorithms=[
+                             secret['ALGORITHM']],
+                             options=jwt_options)
+
         username: str = payload.get("sub")
+        # print(username)
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-    except JWTError:
+    except JWTError as e:
+        print('jwt decode error:' + str(e))
         raise credentials_exception
     user = get_user(username=token_data.username)
     if user is None:
@@ -181,7 +199,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    #user_id = current_user.get("ID", None)
+    # user_id = current_user.get("ID", None)
     if not current_user:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
@@ -194,14 +212,14 @@ async def login_for_access_token(tokenEntity: TokenEntity):
         secret = json.load(json_file)
 
     user = authenticate_user(tokenEntity.username, tokenEntity.password)
-    #user_id = user.get("ID", None)
+    # user_id = user.get("ID", None)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    print(user)
+    # print(user)
     access_token_expires = timedelta(
         minutes=int(secret['ACCESS_TOKEN_EXPIRE_MINUTES']))
     access_token = create_access_token(
@@ -215,4 +233,6 @@ async def login_for_access_token(tokenEntity: TokenEntity):
 
 @app.post("/BackendEngine/")
 async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
+    # print(backendEntity.procname)
+    # print(backendEntity.params)
     return callProcedure(backendEntity.procname, backendEntity.params)
