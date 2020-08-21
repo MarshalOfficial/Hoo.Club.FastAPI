@@ -33,7 +33,7 @@ def callProcedure(procname, data):
     connection = db.raw_connection()
 
     try:
-        print("start calling " + procname)
+        # print("start calling " + procname)
         cursor = connection.cursor()
         sql = """{ CALL [dbo].[ProcEngine] (@proc=?,@data=?) }"""
         params = (procname, data)
@@ -51,7 +51,7 @@ def callProcedure(procname, data):
         # print(results)
         jret = json.dumps(results, default=myconverter,
                           ensure_ascii=False).encode('utf8')
-        print(jret)
+        # print(jret)
         return jret
     except Exception as e:
         errstr = "DB Call Proc Error!", e, "occurred."
@@ -244,9 +244,9 @@ async def read_own_test(backendEntity: BackendEntity, current_user: User = Depen
 
 
 # development mode
-@app.post("/BackendEngine1/")
-async def read_own_test(procname: str, params: str):
-    return callProcedure(procname, params)
+# @app.post("/BackendEngine1/")
+# async def read_own_test(procname: str, params: str):
+#     return callProcedure(procname, params)
 
 
 # @app.get("/BackendEngineGet/")
