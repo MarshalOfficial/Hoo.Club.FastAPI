@@ -235,4 +235,11 @@ async def login_for_access_token(tokenEntity: TokenEntity):
 async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
     # print(backendEntity.procname)
     # print(backendEntity.params)
+    # print(str(User))
     return callProcedure(backendEntity.procname, backendEntity.params)
+
+
+# development mode
+@app.post("/BackendEngine1/")
+async def read_own_test(procname: str, params: str):
+    return callProcedure(procname, params)
