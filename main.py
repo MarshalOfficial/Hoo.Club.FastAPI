@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,10 @@ import os
 
 def myconverter(o):
     if isinstance(o, datetime.datetime):
-        return o.__str__()
+        return o.isoformat()
+    if isinstance(o, date):
+        return o.isoformat()
+    
 
 
 def callProcedure(procname, data):
@@ -103,9 +106,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app = FastAPI()
 
 origins = [
-    "http://localhost:44381",
-    "http://app.hoo.club:44381",
-    "https://app.hoo.club:44381",
+    "http://localhost:5800",
+    "http://app.hoo.club:5800",
+    "https://app.hoo.club:5800",
     "http://app.hoo.club",
     "https://app.hoo.club",
 ]
