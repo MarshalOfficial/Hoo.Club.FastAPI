@@ -21,7 +21,6 @@ def myconverter(o):
         return o.isoformat()
     if isinstance(o, date):
         return o.isoformat()
-    
 
 
 def callProcedure(procname, data):
@@ -29,14 +28,19 @@ def callProcedure(procname, data):
     with open(dir) as json_file:
         secret = json.load(json_file)
 
-    params = urllib.parse.quote_plus(
-        'DRIVER={SQL Server Native Client 11.0};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (secret['server'], secret['db'], secret['username'], secret['password']))
-    db = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
+    # on windows os use below connection string
+    # params = urllib.parse.quote_plus(
+    #     'DRIVER={SQL Server Native Client 11.0};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (secret['server'], secret['db'], secret['username'], secret['password']))
+    # db = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
+
+    # on Linux os use below connection string
+    db = create_engine("mssql+pyodbc://%s:%s@%s/%s?driver=ODBC+Driver+17+for+SQL+Server" %
+                       (secret['username'], secret['password'], secret['server'], secret['db']))
 
     connection = db.raw_connection()
 
     try:
-        # print("start calling " + procname)
+        print("start calling " + procname)
         cursor = connection.cursor()
         sql = """{ CALL [dbo].[ProcEngine] (@proc=?,@data=?) }"""
         params = (procname, data)
@@ -111,12 +115,14 @@ origins = [
     "https://app.hoo.club:5800",
     "http://app.hoo.club",
     "https://app.hoo.club",
+    "http://marshalbackend.com",
+    "https://marshalbackend.com",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=['*'],  # origins
+    allow_credentials=True,  # True
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -176,10 +182,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        # print('get_current_user: start')
-        # print('token:' + token)
-        # print('sec key:' + secret['secretkey'])
-        # print('alg:' + secret['ALGORITHM'])
         jwt_options = {
             'verify_signature': False,
             'verify_exp': True,
@@ -192,7 +194,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
                              options=jwt_options)
 
         username: str = payload.get("sub")
-        # print(username)
+
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
@@ -210,6 +212,16 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+@app.get("/")
+async def get():
+    return ('Marshal Backend Server: Hoo')
+
+# @app.get("/favicon.ico")
+# async def geticon():
+#     dir = '%s/favicon.ico' % (os.path.dirname(__file__))
+#     return (open(dir,"wb") )
 
 
 @app.post("/token", response_model=Token)
@@ -238,23 +250,18 @@ async def login_for_access_token(tokenEntity: TokenEntity):
             "MemberID": user.get("MemberID", None)}
 
 
+# parameters in the header
 @app.post("/BackendEngine/")
-async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
-    # print(backendEntity.procname)
-    # print(backendEntity.params)
-    # print(str(User))
-    return callProcedure(backendEntity.procname, backendEntity.params)
+async def read_own_test(procname: str, params: str, current_user: User = Depends(get_current_active_user)):
+    return callProcedure(procname, params)
+
+# parameters in the body
+# @app.post("/BackendEngine/")
+# async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
+#     return callProcedure(backendEntity.procname, backendEntity.params)
 
 
 # development mode
 # @app.post("/BackendEngine1/")
-# async def read_own_test(procname: str, params: str):
+# async def read_own_test1(procname: str, params: str):
 #     return callProcedure(procname, params)
-
-
-# @app.get("/BackendEngineGet/")
-# async def read_own_test():
-#     # print(backendEntity.procname)
-#     # print(backendEntity.params)
-#     # print(str(User))
-#     return callProcedure("GetSurveyImages", '{"PageNumber":"1","PageSize":"3","CategoryID":"1","UserID":"5"}')
