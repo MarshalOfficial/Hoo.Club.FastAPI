@@ -108,6 +108,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI(docs_url=None)
+# app = FastAPI()
 
 origins = [
     "http://localhost:5800",
@@ -214,6 +215,42 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
+def get_current_user_bytoken(token: str):
+    dir = '%s/secret.json' % (os.path.dirname(__file__))
+    with open(dir) as json_file:
+        secret = json.load(json_file)
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        jwt_options = {
+            'verify_signature': False,
+            'verify_exp': True,
+            'verify_nbf': False,
+            'verify_iat': True,
+            'verify_aud': False
+        }
+        payload = jwt.decode(token, secret["secretkey"], algorithms=[
+                             secret['ALGORITHM']],
+                             options=jwt_options)
+
+        username: str = payload.get("sub")
+
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError as e:
+        print('jwt decode error:' + str(e))
+        raise credentials_exception
+    user = get_user(username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
 @app.get("/")
 async def get():
     return ('Marshal Backend Server: Hoo')
@@ -245,6 +282,23 @@ async def login_for_access_token(tokenEntity: TokenEntity):
         data={"sub": user.get("UserName", None)}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
+            "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
+            "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
+            "MemberID": user.get("MemberID", None)}
+
+
+@app.post("/UserInfoByToken", response_model=Token)
+async def login_for_access_token_userinfo(token: str):
+    user = get_current_user_bytoken(token)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return {"access_token": token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
             "MemberID": user.get("MemberID", None)}
