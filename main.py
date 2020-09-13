@@ -110,15 +110,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app = FastAPI(docs_url=None)
 # app = FastAPI() #
 
-origins = [
-    "http://localhost:5800",
-    "http://app.hoo.club:5800",
-    "https://app.hoo.club:5800",
-    "http://app.hoo.club",
-    "https://app.hoo.club",
-    "http://marshalbackend.com",
-    "https://marshalbackend.com",
-]
+origins = []
 
 app.add_middleware(
     CORSMiddleware,
@@ -314,8 +306,3 @@ async def read_own_test(procname: str, params: str, current_user: User = Depends
 # async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
 #     return callProcedure(backendEntity.procname, backendEntity.params)
 
-
-# development mode
-# @app.post("/BackendEngine1/")
-# async def read_own_test1(procname: str, params: str):
-#     return callProcedure(procname, params)
