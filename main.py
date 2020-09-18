@@ -77,6 +77,7 @@ class Token(BaseModel):
     FirstName: str
     LastName: str
     MemberID: int
+    StaffID: int
 
 
 class BackendEntity(BaseModel):
@@ -276,7 +277,7 @@ async def login_for_access_token(tokenEntity: TokenEntity):
     return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
 
 
 @app.post("/UserInfoByToken", response_model=Token)
@@ -293,7 +294,7 @@ async def login_for_access_token_userinfo(token: str):
     return {"access_token": token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
 
 
 # parameters in the header
@@ -305,4 +306,3 @@ async def read_own_test(procname: str, params: str, current_user: User = Depends
 # @app.post("/BackendEngine/")
 # async def read_own_test(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user)):
 #     return callProcedure(backendEntity.procname, backendEntity.params)
-
