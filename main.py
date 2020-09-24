@@ -492,8 +492,8 @@ async def BackendEngineBody_coinbit(backendEntity: BackendEntity, current_user: 
     return callProcedure(backendEntity.procname, backendEntity.params, "coinbit")
 
 
-@app.post("/coinbit/e71234d056b056c794a321e54fffc92f/")
-async def BackendEngineBody_coinbit(getall: int):
+@app.get("/coinbit/e71234d056b056c794a321e54fffc92f/")
+async def BackendEngine_coinbit_getprice(getall: int):
     return callProcedure('CryptoPriceGet', getall, "coinbit")
 
 
