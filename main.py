@@ -48,6 +48,11 @@ def callProcedure(procname, data, dbname):
         finaleDB = secret['coindb']
         finaleUsr = secret['coinusername']
         finalPass = secret['coinpassword']
+    elif dbname == 'torder':
+        finaleSrv = secret['torderserver']
+        finaleDB = secret['torderdb']
+        finaleUsr = secret['torderusername']
+        finalPass = secret['torderpassword']
 
     # on windows os use below connection string
     # params = urllib.parse.quote_plus(
@@ -496,5 +501,19 @@ async def BackendEngineBody_coinbit(backendEntity: BackendEntity, current_user: 
 async def BackendEngine_coinbit_getprice(getall: int):
     return callProcedure('CryptoPriceGet', getall, "coinbit")
 
+
+#######################################
+
+
+#TORDER################################
+
+@app.post("/torder/BackendEngine/")
+async def BackendEngine_torder(procname: str, params: str):
+    return callProcedure(procname, params, "torder")
+
+
+@app.post("/torder/BackendEngineBody/")
+async def BackendEngineBody_torder(backendEntity: BackendEntity):
+    return callProcedure(backendEntity.procname, backendEntity.params, "torder")
 
 #######################################
