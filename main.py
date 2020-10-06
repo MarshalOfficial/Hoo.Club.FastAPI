@@ -498,8 +498,18 @@ async def BackendEngineBody_coinbit(backendEntity: BackendEntity, current_user: 
 
 
 @app.get("/coinbit/e71234d056b056c794a321e54fffc92f/")
-async def BackendEngine_coinbit_getprice(getall: int):
+async def BackendEngine_coinbit_get_crypto_price(getall: int):
     return callProcedure('CryptoPriceGet', getall, "coinbit")
+
+
+@app.get("/coinbit/fgttzibz7hdn8c63798u7n3cahxdvbvh/")
+async def BackendEngine_coinbit_get_gold_price():
+    return callProcedure('GoldPriceGet', '', "coinbit")
+
+
+@app.get("/coinbit/v2wyy3v9ptdrv27uqug2phxaqhggbwdx/")
+async def BackendEngine_coinbit_get_curreny_price():
+    return callProcedure('CurrencyPriceGet', '', "coinbit")
 
 
 #######################################
