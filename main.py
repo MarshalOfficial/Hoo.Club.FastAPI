@@ -108,7 +108,7 @@ class Token(BaseModel):
 
 class BackendEntity(BaseModel):
     procname: str
-    params: str
+    params: dict
 
 
 class TokenData(BaseModel):
@@ -342,7 +342,10 @@ async def BackendEngine_hoo(procname: str, params: str, current_user: User = Dep
 
 @app.post("/BackendEngineBody/")
 async def BackendEngineBody_hoo(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user_hoo)):
-    return callProcedure(backendEntity.procname, backendEntity.params, "hoo")
+    param = json.dumps(backendEntity.params, default=myconverter,
+                       ensure_ascii=False)
+
+    return callProcedure(backendEntity.procname, param, "hoo")
 
 #######################################
 
@@ -440,7 +443,10 @@ async def BackendEngine_gms(procname: str, params: str, current_user: User = Dep
 
 @app.post("/gms/BackendEngineBody/")
 async def BackendEngineBody_gms(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user_gms)):
-    return callProcedure(backendEntity.procname, backendEntity.params, "gms")
+    param = json.dumps(backendEntity.params, default=myconverter,
+                       ensure_ascii=False)
+
+    return callProcedure(backendEntity.procname, param, "gms")
 
 #######################################
 
@@ -539,7 +545,10 @@ async def BackendEngine_cointbit(procname: str, params: str, current_user: User 
 
 @app.post("/coinbit/BackendEngineBody/")
 async def BackendEngineBody_coinbit(backendEntity: BackendEntity, current_user: User = Depends(get_current_active_user_coinbit)):
-    return callProcedure(backendEntity.procname, backendEntity.params, "coinbit")
+    param = json.dumps(backendEntity.params, default=myconverter,
+                       ensure_ascii=False)
+
+    return callProcedure(backendEntity.procname, param, "coinbit")
 
 
 @app.get("/coinbit/e71234d056b056c794a321e54fffc92f/")
@@ -569,6 +578,10 @@ async def BackendEngine_torder(procname: str, params: str):
 
 @app.post("/torder/BackendEngineBody/")
 async def BackendEngineBody_torder(backendEntity: BackendEntity):
-    return callProcedure(backendEntity.procname, backendEntity.params, "torder")
+    param = json.dumps(backendEntity.params, default=myconverter,
+                       ensure_ascii=False)
+
+    return callProcedure(backendEntity.procname, param, "torder")
+
 
 #######################################
