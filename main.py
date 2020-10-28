@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +20,8 @@ def myconverter(o):
     if isinstance(o, datetime.datetime):
         return o.isoformat()
     if isinstance(o, date):
+        return o.isoformat()
+    if isinstance(o, time):
         return o.isoformat()
 
 
