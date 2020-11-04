@@ -106,6 +106,7 @@ class Token(BaseModel):
     LastName: str
     MemberID: int
     StaffID: int
+    Gender: bool
 
 
 class BackendEntity(BaseModel):
@@ -302,7 +303,8 @@ async def login_for_access_token_hoo(tokenEntity: TokenEntity):
     return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None),
+            "Gender": user.get("Gender", None)}
 
 
 @app.post("/UserInfoByToken", response_model=Token)
@@ -319,7 +321,8 @@ async def login_for_access_token_userinfo(token: str):
     return {"access_token": token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None),
+            "Gender": user.get("Gender", None)}
 
 
 @app.post("/SsCZC7hJxulnQ4l")
@@ -420,7 +423,8 @@ async def login_for_access_token_gms(tokenEntity: TokenEntity):
     return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None),
+            "Gender": user.get("Gender", None)}
 
 
 @app.post("/gms/SsCZC7hJxulnQ4l")
@@ -522,7 +526,8 @@ async def login_for_access_token_coinbit(tokenEntity: TokenEntity):
     return {"access_token": access_token, "token_type": "bearer", "UserID": user.get("UserID", None),
             "UserName": user.get("UserName", ""), "IsActive": user.get("IsActive", None),
             "FirstName": user.get("FirstName", ""), "LastName": user.get("LastName", ""),
-            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None)}
+            "MemberID": user.get("MemberID", None), "StaffID": user.get("StaffID", None),
+            "Gender": user.get("Gender", None)}
 
 
 @app.post("/coinbit/SsCZC7hJxulnQ4l")
